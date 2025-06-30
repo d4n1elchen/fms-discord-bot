@@ -1,8 +1,10 @@
 import argparse
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Mapping
 
 import discord
+import pytz
 from fmslist import FindMeStoreItemList, ItemDetails
 
 parser = argparse.ArgumentParser(
@@ -22,6 +24,17 @@ parser.add_argument(
 )
 
 
+@dataclass(frozen=True)
+class ChannelSubscription:
+    channel_id: int
+    timezone: pytz.BaseTzInfo
+
+
+def local_time_str(dt: datetime, timezone: pytz.BaseTzInfo) -> str:
+    """Format datetime with timezone."""
+    return dt.astimezone(timezone).strftime("%Y-%m-%d %H:%M:%S %Z%z")
+
+
 def main():
     args = parser.parse_args()
 
@@ -38,11 +51,14 @@ def main():
 
     try:
         with open(args.channel_id_file, "r") as file:
-            subscribe_channel_ids = [
-                int(channel_id)
-                for channel_id in file.read().strip().splitlines()
-                if channel_id.isdigit()
-            ]
+            subscribe_channel_ids: list[ChannelSubscription] = []
+            for channel_id_row in file.read().strip().splitlines():
+                channel_id, tz = channel_id_row.split(",")
+                subscribe_channel_ids.append(
+                    ChannelSubscription(
+                        int(channel_id.strip()), pytz.timezone(tz.strip())
+                    )
+                )
     except FileNotFoundError:
         print(f"Channel ID file '{args.channel_id_file}' not found.")
         return
@@ -74,12 +90,13 @@ def main():
             items_by_end_time[end_time].append(item)
 
         await client.wait_until_ready()
-        for channel_id in subscribe_channel_ids:
-            channel = client.get_channel(channel_id)
+        for channel_sub in subscribe_channel_ids:
+            channel = client.get_channel(channel_sub.channel_id)
             if channel:
                 for end_time, items in items_by_end_time.items():
                     if not items:
                         continue
+                    end_time_str = local_time_str(end_time, channel_sub.timezone)
                     embeds = []
                     # Create an embed for every 10 items
                     for i in range(0, len(items), 10):
@@ -88,11 +105,11 @@ def main():
                             f"[{item.title}]({item.link})" for item in item_slice
                         )
                         embed = discord.Embed(
-                            description=f"Items ending at {end_time}\n{item_list}",
+                            description=f"Items ending at {end_time_str}\n{item_list}",
                             color=discord.Color.blue(),
                         )
                         embeds.append(embed)
-                    title = f"There are {len(items)} items ending at {end_time}"
+                    title = f"### 🚨🚨🚨 以下 {len(items)} 件商品將在 {end_time_str} 天後截止受注 🚨🚨🚨"
                     await channel.send(content=title, embeds=embeds)  # type: ignore
             else:
                 print(f"Channel with ID {channel_id} not found.")
