@@ -35,6 +35,24 @@ def local_time_str(dt: datetime, timezone: pytz.BaseTzInfo) -> str:
     return dt.astimezone(timezone).strftime("%Y-%m-%d %H:%M:%S %Z%z")
 
 
+def check_end_time(end_time: datetime) -> int:
+    """Check if the end time is exact 7days, 3days, or 1 day away. Only return 7, 3, or 1 if it matches exactly. Return -1 if not."""
+    now = datetime.now(pytz.utc)
+    print(f"Current time: {now}")
+    print(f"End time: {end_time}")
+    delta_hour = int((end_time - now).total_seconds()) // 3600
+    print(delta_hour)
+
+    if delta_hour == 24 * 7:
+        return 7
+    elif delta_hour == 24 * 3:
+        return 3
+    elif delta_hour == 24:
+        return 1
+
+    return -1
+
+
 def main():
     args = parser.parse_args()
 
@@ -94,6 +112,9 @@ def main():
             channel = client.get_channel(channel_sub.channel_id)
             if channel:
                 for end_time, items in items_by_end_time.items():
+                    end_time_check = check_end_time(end_time)
+                    if end_time_check == -1:
+                        continue
                     if not items:
                         continue
                     end_time_str = local_time_str(end_time, channel_sub.timezone)
@@ -109,7 +130,7 @@ def main():
                             color=discord.Color.blue(),
                         )
                         embeds.append(embed)
-                    title = f"### 🚨🚨🚨 以下 {len(items)} 件商品將在 {end_time_str} 天後截止受注 🚨🚨🚨"
+                    title = f"### 🚨🚨🚨 以下 {len(items)} 件商品將在 {end_time_check} 天後截止 🚨🚨🚨"
                     await channel.send(content=title, embeds=embeds)  # type: ignore
             else:
                 print(f"Channel with ID {channel_id} not found.")
