@@ -120,9 +120,9 @@ def main():
                         continue
                     end_time_str = local_time_str(end_time, channel_sub.timezone)
                     embeds = []
-                    # Create an embed for every 10 items
-                    for i in range(0, len(items), 10):
-                        item_slice = items[i : i + 10]
+                    # Create an embed for every 5 items
+                    for i in range(0, len(items), 5):
+                        item_slice = items[i : i + 5]
                         item_list = "\n".join(
                             f"[{item.title}]({item.link})" for item in item_slice
                         )
