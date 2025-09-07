@@ -120,19 +120,20 @@ def main():
                         continue
                     end_time_str = local_time_str(end_time, channel_sub.timezone)
                     embeds = []
-                    # Create an embed for every 5 items
-                    for i in range(0, len(items), 5):
-                        item_slice = items[i : i + 5]
-                        item_list = "\n".join(
-                            f"[{item.title}]({item.link})" for item in item_slice
-                        )
-                        embed = discord.Embed(
-                            description=f"Items ending at {end_time_str}\n{item_list}",
-                            color=discord.Color.blue(),
-                        )
-                        embeds.append(embed)
-                    title = f"### 🚨🚨🚨 以下 {len(items)} 件商品將在 {end_time_check} 天後截止 🚨🚨🚨"
-                    await channel.send(content=title, embeds=embeds)  # type: ignore
+                    for i in range(0, len(items), 50):
+                        # Create an embed for every 5 items, 50 maximum because 10 embeds maximum
+                        for j in range(0, 50, 5):
+                            item_slice = items[i + j : i + j + 5]
+                            item_list = "\n".join(
+                                f"[{item.title}]({item.link})" for item in item_slice
+                            )
+                            embed = discord.Embed(
+                                description=f"Items ending at {end_time_str}\n{item_list}",
+                                color=discord.Color.blue(),
+                            )
+                            embeds.append(embed)
+                        title = f"### 🚨🚨🚨 以下 {len(items)} 件商品將在 {end_time_check} 天後截止 🚨🚨🚨"
+                        await channel.send(content=title, embeds=embeds)  # type: ignore
             else:
                 print(f"Channel with ID {channel_id} not found.")
 
