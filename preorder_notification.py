@@ -122,7 +122,7 @@ def main():
                     embeds = []
                     for i in range(0, len(items), 50):
                         # Create an embed for every 5 items, 50 maximum because 10 embeds maximum
-                        for j in range(0, 50, 5):
+                        for j in range(0, min(50, len(items)), 5):
                             item_slice = items[i + j : i + j + 5]
                             item_list = "\n".join(
                                 f"[{item.title}]({item.link})" for item in item_slice
