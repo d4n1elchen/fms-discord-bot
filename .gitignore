@@ -3,3 +3,4 @@ venv/
 __pycache__/
 token.txt
 channels.txt
+.DS_Store

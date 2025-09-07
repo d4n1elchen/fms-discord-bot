@@ -56,6 +56,10 @@ def check_end_time(end_time: datetime) -> int:
 def main():
     args = parser.parse_args()
 
+    print("Fetching pre-order items...")
+    fms = FindMeStoreItemList()
+    items = fms.get_items(fill_preorder_period=True)
+
     try:
         with open(args.token_file, "r") as file:
             token = file.read().strip()
@@ -94,11 +98,8 @@ def main():
     async def on_ready():
         print(f"Logged in as {client.user}")
 
-        print("Fetching pre-order items...")
-        fms = FindMeStoreItemList()
-        items = fms.get_items(fill_preorder_period=True)
-
         items_by_end_time: Mapping[datetime, list[ItemDetails]] = {}
+        nonlocal items
         for item in items:
             if not item.preorder_period:
                 continue
